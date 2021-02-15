@@ -59,7 +59,7 @@ class DBot(Bot):
 
         # SAVE IMG IN DYNAMODB
         product['img'] = local_fp
-        ddb = boto3.resource('dynamodb')
+        ddb = boto3.resource('dynamodb', region_name='eu-west-1')
         table = ddb.Table('demo-scraper-products')
         table.put_item(Item=product)
 
