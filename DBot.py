@@ -4,6 +4,7 @@ sys.path.append('..')
 from bots.bot import Bot
 from time import sleep
 import os
+import boto3
 
 
 class DBot(Bot):
@@ -41,6 +42,8 @@ class DBot(Bot):
         ]
         
     def _save_product(self, product):
+
+        # SAVE IMG LOCALLY
         img_ext = product['img'].split('.')[-1]
         product_folder = f'products/{product["product_id"]}'
         local_fp = f'{product_folder}/img.{img_ext}'
@@ -49,12 +52,21 @@ class DBot(Bot):
         if not os.path.exists(product_folder):
             os.mkdir(product_folder)
         self.download_file(product['img'], local_fp)
+        
+        # SAVE IMG ON S3
+        s3 = boto3.client('s3')
+        s3.upload_file(local_fp, 'demo-scraper-ai-core', local_fp)
 
+        # SAVE IMG IN DYNAMODB
+        product['img'] = local_fp
+        ddb = boto3.resource('dynamodb')
+        table = ddb.Table('demo-scraper-products')
+        table.put_item(Item=product)
 
 if __name__ == '__main__':
     # EXAMPLE USAGE
     bot = DBot(
-        # headless=True
+        headless=True
     )
     # %%
     bot._scrape()
